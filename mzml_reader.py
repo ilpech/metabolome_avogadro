@@ -35,6 +35,10 @@ if __name__ == '__main__':
     for i in range(exp.getNrSpectra()):
         spectrum = exp.getSpectrum(i)
         mz, intensity = spectrum.get_peaks()
+        for j in range(len(mz)):
+            debug(mz[j])
+            debug(intensity[j])
+        exit()
 
         print('spectr', i, mz.shape, intensity.shape)
         debug(mz.min())
