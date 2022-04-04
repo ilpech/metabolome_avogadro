@@ -7,15 +7,15 @@ import numpy as np
 
 from varname.helpers import debug
 
-from opengl3d_viewer import opengl_viewer
+from bioviewer import BioViewer
 
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
 import OpenGL.GLUT as glut
 from OpenGL.arrays import vbo
 
+
 if __name__ == '__main__':
-    viewer = opengl_viewer('out')
     seq = ms.AASequence.fromString("FPIANGDER") # create AASequence object from string representation
     prefix = seq.getPrefix(4) # extract prefix of length 4
     suffix = seq.getSuffix(5) # extract suffix of length 5
@@ -33,7 +33,12 @@ if __name__ == '__main__':
         # print(aa)
         print(aa.getName(), aa.getFormula())
     print(seq.getFormula())
-    # exit()
+
+    mzml_path = os.path.join('testdata', '02_PM_30102018_1.mzML') 
+    # mzml_path = os.path.join('data', '59_PM_30102018_3.mzML'), 
+    viewer = BioViewer('out', mzml_path=mzml_path)
+    viewer.visualize()
+    exit()
     exp = ms.MSExperiment()
     ms.MzMLFile().load(
         # os.path.join('testdata', '02_PM_30102018_1.mzML'), 

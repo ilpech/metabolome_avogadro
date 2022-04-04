@@ -31,8 +31,8 @@ class opengl_viewer(pcl_image):
         self.previous_GL_image = None
         self.out_image = None
         self.ffmpeg_frame = 0
-        self.height = 512
-        self.width = 512
+        self.height = 1024
+        self.width = 1024
         self.drawBazis()
 
     def main(self):
@@ -100,7 +100,6 @@ class opengl_viewer(pcl_image):
         gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
         gl.glEnableClientState(gl.GL_COLOR_ARRAY)
         self.data_buffer.draw()
-        self.data_buffer.drawVBOPts(self.mzml)
         self.data_buffer.drawVBOLines(self.bazis_vbo)
         gl.glDisableClientState(gl.GL_COLOR_ARRAY)
         gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
@@ -234,8 +233,7 @@ class opengl_viewer(pcl_image):
             len(xyz_bazis)
         )
 
-    def visualize(self, mz):
-        self.mzml = mz
+    def visualize(self):
         print('VIEWER: RUN')
         self.main()
 
