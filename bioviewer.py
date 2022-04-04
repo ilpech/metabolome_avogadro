@@ -25,16 +25,26 @@ np.set_printoptions(formatter={"float": "{: 0.3f}".format})
 from opengl3d_viewer import opengl_viewer
 
 class BioViewer(opengl_viewer):
-    def __init__(self, outpath, mzml_path):
-        super(BioViewer, self).__init__(outpath)
+    def __init__(
+        self,
+        outpath, 
+        mzml_path, 
+        samples2run=3,
+        ms_experiment: ms.MSExperiment=None,
+        experiment_name='MOLEbioViewer'
+    ):
+        super(BioViewer, self).__init__(outpath, experiment_name)
         self.mzFilePath = mzml_path
-        self.mzFile = ms.MSExperiment()
-        ms.MzMLFile().load(
-            mzml_path,
-            self.mzFile
-        )
+        if ms_experiment is None:
+            self.mzFile = ms.MSExperiment()
+            ms.MzMLFile().load(
+                mzml_path,
+                self.mzFile
+            )
+        else:
+            self.mzFile = ms_experiment
         self.msMzCount = len(self.mzFile.getSpectrum(0).get_peaks()[0])
-        self.drawMzml(3)
+        self.drawMzml(samples2run)
 
     
     def drawSpectra(

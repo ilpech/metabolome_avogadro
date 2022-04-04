@@ -25,7 +25,8 @@ np.set_printoptions(formatter={"float": "{: 0.3f}".format})
 from opengl_base import pcl_image
 
 class opengl_viewer(pcl_image):
-    def __init__(self, outpath):
+    def __init__(self, outpath, winname='MOLE3D'):
+        self.winname = winname
         super(opengl_viewer, self).__init__(outpath)
         self.current_GL_image = None
         self.previous_GL_image = None
@@ -47,7 +48,7 @@ class opengl_viewer(pcl_image):
         glut.glutInitDisplayMode(glut.GLUT_RGB | glut.GLUT_DOUBLE | glut.GLUT_DEPTH)
         glut.glutInitWindowSize(self.height,self.width)
         glut.glutInitWindowPosition(10,10)
-        glut.glutCreateWindow("MOLE3D")
+        glut.glutCreateWindow(self.winname)
         glut.glutDisplayFunc(self.display)
         glut.glutReshapeFunc(self.reshape)
         glut.glutMouseFunc(self.mouse)
