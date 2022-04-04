@@ -13,9 +13,6 @@ import OpenGL.GL as gl
 import OpenGL.GLU as glu
 import OpenGL.GLUT as glut
 from OpenGL.arrays import vbo
-import device_sync_parser
-
-import laspy
 
 if __name__ == '__main__':
     viewer = opengl_viewer('out')

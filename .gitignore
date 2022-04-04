@@ -71,6 +71,7 @@ tasks.db
 
 **/data/*
 **/testdata/*
+**/out/*
 
 #other
 *.swp
