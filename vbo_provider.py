@@ -11,31 +11,10 @@ from varname.helpers import debug
 np.set_printoptions(formatter={"float": "{: 0.3f}".format})
 
 class VBO_Provider():
-    def __init__(self, file_object, vbsize, means, mode, dim, scaled = True):
+    def __init__(self):
         self.vbos = []
-        self.allcolor = False
-        if file_object is not None:
-            start_idx = 0
-            self.file_object = file_object
-            end_idx = vbsize
-            i = 1
-            file_size = len((file_object))
-            print(f'{file_size} pts in data')
-            while(start_idx < file_size):
-                i += 1
-                try:
-                    end_idx = min(len(file_object), start_idx + vbsize) 
-                    print("Buffering points " + str(start_idx) + " to " + str((end_idx)))
-                    dat = self.slice_file(start_idx, end_idx, means, scaled)
-                    self.set_color_mode(mode,dim, start_idx, end_idx, dat)
-                    _vbo = vbo.VBO(data = np.array(dat, dtype = np.float32),
-                                usage = gl.GL_DYNAMIC_DRAW, target = gl.GL_ARRAY_BUFFER)
-                    self.vbos.append((_vbo, end_idx -start_idx))
-                    start_idx += vbsize
-                except Exception as err:
-                    print("Error initializing VBO:")
-                    print(err)
-
+        self.allcolor = False # pichugin: ?
+    
     def slice_file(self,start_idx, end_idx, means, scaled):
         if scaled:
             return(
@@ -74,7 +53,6 @@ class VBO_Provider():
         gl.glVertexPointer(3, gl.GL_FLOAT, 24,_vbo[0])
         gl.glColorPointer(3, gl.GL_FLOAT, 24, _vbo[0] + 12)
         gl.glDrawArrays(gl.GL_LINES, 0, _vbo[1]) 
-        # gl.glDrawArrays(gl.GL_TRIANGLES, 0, _vbo[1]) 
         _vbo[0].unbind()
         gl.glDisableClientState(gl.GL_COLOR_ARRAY)
         gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
@@ -91,24 +69,23 @@ class VBO_Provider():
         gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
 
     def drawVBOTriangles(self, _vbo:Tuple[vbo.VBO, int]):
+        gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
+        gl.glEnableClientState(gl.GL_COLOR_ARRAY)
         _vbo[0].bind()
         gl.glVertexPointer(3, gl.GL_FLOAT, 24,_vbo[0])
         gl.glColorPointer(3, gl.GL_FLOAT, 24, _vbo[0] + 12)
         gl.glDrawArrays(gl.GL_TRIANGLES, 0, _vbo[1]) 
         _vbo[0].unbind()
+        gl.glDisableClientState(gl.GL_COLOR_ARRAY)
+        gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
 
     def draw(self):
         for _vbo in self.vbos:
             _vbo[0].bind()
-            # gl.glVertexPointer(3, gl.GL_FLOAT, 10,_vbo[0])
-            # gl.glColorPointer(3, gl.GL_FLOAT, 10, _vbo[0] + 12)
             gl.glVertexPointer(3, gl.GL_FLOAT, 24,_vbo[0])
             gl.glColorPointer(3, gl.GL_FLOAT, 24, _vbo[0] + 12)
-            # gl.glDrawArrays(gl.GL_LINES, 0, _vbo[1]) 
             gl.glDrawArrays(gl.GL_POINTS, 0, _vbo[1]) 
-            # gl.glDrawArrays(gl.GL_TRIANGLES, 0, _vbo[1]) 
             _vbo[0].unbind()
-        #gl.glMultiDrawArrays(gl.GL_POINTS, 0,100000, len(self.vbos))
     
     def set_color_mode(self, mode, dim,start_idx, end_idx, data): 
         if (mode == "default"):

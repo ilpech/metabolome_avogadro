@@ -1,8 +1,5 @@
 import os 
-from typing import Tuple
-from black import out
-import laspy
-from matplotlib.pyplot import sca
+from typing import Tuple, List
 import numpy as np
 import random
 import sys
@@ -11,7 +8,6 @@ from typing import Tuple
 
 from PIL import Image
 
-# OpenGL library doesn't support absolute import for gl, glu, glut, or arrays
 import OpenGL.GL as gl 
 import OpenGL.GLU as glu 
 import OpenGL.GLUT as glut 
@@ -24,17 +20,17 @@ import cv2
 
 np.set_printoptions(formatter={"float": "{: 0.3f}".format})
 
+import OpenGL
+
 # Skip debugging for speedup
-#OpenGL.ERROR_CHECKING = False
+OpenGL.ERROR_CHECKING = False
 
 # Skip logging for speedup 
-#OpenGL.ERROR_LOGGING = False
+OpenGL.ERROR_LOGGING = False
 
 
 class pcl_image():
-    def __init__(self, file_object, mode, dim, outpath=None):
-        self.file_object = file_object
-        self.read_data(mode, dim)
+    def __init__(self, outpath=None):
         self.movement_granularity = .5
         self.look_granularity = 16.0
         self.outpath = outpath
@@ -42,6 +38,7 @@ class pcl_image():
             self.outpath = os.path.join(outpath, tools_n_helpers.curDateTime())
             os.makedirs(self.outpath, exist_ok=True)
         self.frame_number = -1
+        self.data_buffer = VBO_Provider() 
         
     
     def visualize(self):
@@ -56,7 +53,6 @@ class pcl_image():
         self.mousex = 0
         self.mousey = 0
         self.mouse_drag = gl.GL_FALSE
-
 
         # Wire up GL
         glut.glutInit(sys.argv)
@@ -80,32 +76,13 @@ class pcl_image():
         glut.glutMainLoop()
         return 0
  
-    def read_data(self, mode, dim):
-        if (np.max(self.file_object.x) - np.min(self.file_object.x)) < 1:
-            self.means = np.array([np.mean(self.file_object.X, dtype = np.float64), 
-                          np.mean(self.file_object.Y, dtype = np.float64), 
-                          np.mean(self.file_object.Z, dtype = np.float64),
-                          0,0,0])
-            self.scaled = False
-        else:
-            self.means = np.array([np.mean(self.file_object.x, dtype = np.float64), 
-                    np.mean(self.file_object.y, dtype = np.float64), 
-                    np.mean(self.file_object.z, dtype = np.float64),
-                    0,0,0])
-            self.scaled = True
-        
-        self.N = len(self.file_object)
-        self.data_buffer = VBO_Provider(self.file_object, 1000000, self.means, mode, dim, self.scaled) 
- 
     def reshape(self, w, h):
-        # print("Reshape " + str(w) + ", " + str(h))
         ratio = w if h == 0 else float(w)/h
         gl.glMatrixMode(gl.GL_PROJECTION)
         gl.glLoadIdentity()
         gl.glViewport(0,0,w,h)
         gl.glLoadIdentity()
         glu.gluPerspective(90,float(ratio),0.001,3000);
-
         gl.glMatrixMode(gl.GL_MODELVIEW)
         
     def timerEvent(self, arg):
@@ -113,7 +90,7 @@ class pcl_image():
         glut.glutPostRedisplay()
         glut.glutTimerFunc(10,self.timerEvent,1)
 
-    def draw_points(self, num):
+    def draw_points(self):
         gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
         gl.glEnableClientState(gl.GL_COLOR_ARRAY)
         self.data_buffer.draw()
@@ -142,7 +119,7 @@ class pcl_image():
         glu.gluLookAt(self.location[0], self.location[1], self.location[2], 
                       self.focus[0],self.focus[1], self.focus[2] ,
                       self.up[0], self.up[1], self.up[2])
-        self.draw_points(self.N)
+        self.draw_points()
         glut.glutSwapBuffers()
         gl.glReadBuffer(gl.GL_FRONT)
         self.height = 1024
@@ -190,8 +167,8 @@ class pcl_image():
         self.focus = np.array([0,0,0])
 
     def camera_reset(self):
-        self.location = np.array([0.0,0.0,1500.0])
-        self.focus = np.array([0.0,0.0,0.0])
+        self.location = np.array([0.0,0.0,10.0])
+        self.focus = np.array([1.0,0.0,0.0])
         self.up = np.array([1.0,0.0,0.0])
 
     def camera_move(self,ammount, axis = 1):

@@ -18,9 +18,7 @@ import device_sync_parser
 import laspy
 
 if __name__ == '__main__':
-    inp_path = 'testdata/calib.las'
-    pc = laspy.file.File(inp_path)
-    viewer = opengl_viewer(pc, None, None, None, 'out')
+    viewer = opengl_viewer('out')
     seq = ms.AASequence.fromString("FPIANGDER") # create AASequence object from string representation
     prefix = seq.getPrefix(4) # extract prefix of length 4
     suffix = seq.getSuffix(5) # extract suffix of length 5
