@@ -1,8 +1,5 @@
 import os 
-from typing import Tuple
-from black import out
-import laspy
-from matplotlib.pyplot import sca
+from typing import Tuple, List
 import numpy as np
 import random
 import sys
