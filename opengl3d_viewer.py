@@ -12,6 +12,7 @@ from typing import Tuple
 from PIL import Image
 
 # OpenGL library doesn't support absolute import for gl, glu, glut, or arrays
+import OpenGL
 import OpenGL.GL as gl 
 import OpenGL.GLU as glu 
 import OpenGL.GLUT as glut 
@@ -31,10 +32,10 @@ np.set_printoptions(formatter={"float": "{: 0.3f}".format})
 from opengl_base import pcl_image
 
 # Skip debugging for speedup
-#OpenGL.ERROR_CHECKING = False
+OpenGL.ERROR_CHECKING = False
 
 # Skip logging for speedup 
-#OpenGL.ERROR_LOGGING = False
+OpenGL.ERROR_LOGGING = False
 
 
 class opengl_viewer(pcl_image):
@@ -53,7 +54,10 @@ class opengl_viewer(pcl_image):
         self.previous_GL_image = None
         self.out_image = None
         self.ffmpeg_frame = 0
+        self.height = 512
+        self.width = 512
         self.drawBazis()
+        self.drawCS()
         
     def framesCnt(self):
         return len(self.run.frames)
@@ -92,8 +96,9 @@ class opengl_viewer(pcl_image):
         gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
         gl.glEnableClientState(gl.GL_COLOR_ARRAY)
         self.data_buffer.draw()
-        self.data_buffer.drawVBOLines(self.mzml)
+        self.data_buffer.drawVBOPts(self.mzml)
         self.data_buffer.drawVBOLines(self.bazis_vbo)
+        self.data_buffer.drawVBOLines(self.cs_vbo)
         gl.glDisableClientState(gl.GL_COLOR_ARRAY)
         gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
          
@@ -107,8 +112,7 @@ class opengl_viewer(pcl_image):
         self.draw_points(self.N)
         glut.glutSwapBuffers()
         gl.glReadBuffer(gl.GL_FRONT)
-        self.height = 1024
-        self.width = 1024
+        
         glut.glutReshapeWindow(self.height, self.width)
         img = gl.glReadPixels(
             0, 
@@ -142,7 +146,8 @@ class opengl_viewer(pcl_image):
         self.current_GL_image = im / 255.0
         self.out_image = self.current_GL_image
         img_outpath = os.path.join(self.outpath, '{:08d}.png'.format(self.ffmpeg_frame))
-        out_resized = cv2.resize(self.out_image, None, fx=.25, fy=.25)
+        # out_resized = cv2.resize(self.out_image, None, fx=.25, fy=.25)
+        out_resized = self.out_image
         # cv2.imshow('GL2CV', out_resized)
         # cv2.waitKey(1)
         out_resized *= 255.0
@@ -226,6 +231,44 @@ class opengl_viewer(pcl_image):
             len(xyz_bazis)
         )
 
+        
+    def drawCS(self):
+        x_shift = 500
+        y_shift = 100
+        coords = []
+        for x_step in range(60):
+            # coords.append(np.array([
+            #     [x_shift*x_step,0,0,1,0,0],
+            #     [x_shift*x_step+10,0,0,1,0,0],
+            # ]))
+            for y_step in range(100):
+                coords.append(np.array([
+                    [x_shift*x_step,y_shift*y_step,0,1,0,0],
+                    [x_shift*x_step+10,y_shift*y_step,0,1,0,0],
+                    [x_shift*x_step,y_shift*y_step,0,0,0,1],
+                    [x_shift*x_step,y_shift*y_step+10,0,0,0,1],
+                    [x_shift*x_step,y_shift*y_step,0,0,1,0],
+                    [x_shift*x_step,y_shift*y_step,10,0,1,0],
+                ]))
+        # for x_step in range(60):
+        #     coords.append(np.array([
+        #         [x_shift*x_step,0,30,1,0,0],
+        #         [x_shift*x_step+10,0,30,1,0,0],
+        #         [x_shift*x_step,0,30,0,0,1],
+        #         [x_shift*x_step,10,30,0,0,1],
+        #         [x_shift*x_step,0,30,0,1,0],
+        #         [x_shift*x_step,0,40,0,1,0],
+        #     ]))
+        cs_ = np.concatenate(coords, axis = 1)
+        self.cs_vbo = (
+            vbo.VBO(
+                data = np.array(cs_, dtype = np.float32),
+                usage = gl.GL_DYNAMIC_DRAW, 
+                target = gl.GL_ARRAY_BUFFER
+            ),
+            len(cs_)
+        )
+
     def visualize(self, mz):
         self.mzml = mz
         print('VIEWER: RUN')
@@ -241,7 +284,7 @@ class opengl_viewer(pcl_image):
         glut.glutInit(sys.argv)
         glut.glutInitContextFlags(glut.GLUT_FORWARD_COMPATIBLE);
         glut.glutInitDisplayMode(glut.GLUT_RGB | glut.GLUT_DOUBLE | glut.GLUT_DEPTH)
-        glut.glutInitWindowSize(1024,1024)
+        glut.glutInitWindowSize(self.height,self.width)
         glut.glutInitWindowPosition(10,10)
         glut.glutCreateWindow("MOLE3D")
         glut.glutDisplayFunc(self.display)
@@ -249,9 +292,10 @@ class opengl_viewer(pcl_image):
         glut.glutMouseFunc(self.mouse)
         glut.glutMotionFunc(self.mouse_motion)
         glut.glutKeyboardFunc(self.keyboard)
-        gl.glClearColor(0.0,0.0,0.0,1.0)
+        # gl.glClearColor(0.0,0.0,0.0,1.0)
+        gl.glClearColor(0.3,0.3,0.3,1.0)
         glut.glutTimerFunc(10,self.timerEvent,1)
-        glut.glutReshapeWindow(1024, 1024);
+        glut.glutReshapeWindow(self.height,self.width);
         self.screenshot_mode = False
         if self.screenshot_mode:
             glut.glutHideWindow()

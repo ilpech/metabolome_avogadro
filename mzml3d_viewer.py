@@ -63,7 +63,10 @@ if __name__ == '__main__':
     debug(exp.getNrSpectra())
     batch_samples = 1000
     batch_samples = len(first_chr_intensity)
-    data_pts_cnt = exp.getNrSpectra() * len(first_chr_intensity) * 2
+    bathcs2draw = exp.getNrSpectra()
+    bathcs2draw = 2
+    # data_pts_cnt = exp.getNrSpectra() * len(first_chr_intensity) * 2
+    data_pts_cnt = bathcs2draw * len(first_chr_intensity) * 2 * 2
     print(data_pts_cnt)
     dat = np.zeros(shape=(data_pts_cnt, 6))
     print(dat.shape)
@@ -76,22 +79,33 @@ if __name__ == '__main__':
         #     to_batch_id = batch_samples
         # else:
         #     to_batch_id = from_batch_id + batch_samples
-        chrom = exp.getSpectrum(i)
-        mz, intensity = chrom.get_peaks()
+        mz_spec = exp.getSpectrum(i)
+        mz, intensity = mz_spec.get_peaks()
         # print(mz)
         for j in range(len(mz)):
             dat_id += 1
             dat[dat_id] = np.array([
-                i * 500,
+                i * 1000,
                 mz[j],
-                intensity[j],
-                # 255/(j+1),
-                np.abs(np.sin(i)),
+                intensity[j]/100,
+                np.abs(1-i),
                 np.abs(np.cos(i)),
-                i
+                i*2
             ])
-        # if i > 3:
-        #     break
+            dat_id += 1
+            dat[dat_id] = np.array([
+                i * 1000 + 500,
+                mz[j],
+                np.log(intensity[j]+1) * 10,
+                np.abs(1-i),
+                np.abs(np.cos(i)),
+                i*2
+                # 255,
+                # 255,
+                # 255
+            ])
+        if i == bathcs2draw:
+            break
     print(dat)
     # exit()
     # dat -= dat.mean()
